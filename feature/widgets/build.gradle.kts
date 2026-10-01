@@ -37,6 +37,9 @@ kotlin {
 }
 
 dependencies {
+    // Renders the persisted layout model, so feature -> core:data.
+    implementation(project(":core:data"))
+
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.core.ktx)

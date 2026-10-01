@@ -38,6 +38,10 @@ ksp {
 }
 
 dependencies {
+    // AppRepository merges LauncherApps with persisted overrides, so core:data
+    // sits directly above core:system. Still one-directional: core:system has
+    // no idea core:data exists.
+    implementation(project(":core:system"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.room.runtime)
