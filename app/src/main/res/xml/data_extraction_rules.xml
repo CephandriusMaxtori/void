@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    See backup_rules.xml for why the icon cache is not listed: it is a derived
+    artefact, rebuilt on first launch.
+
+    device-transfer is a direct device-to-device move rather than a restore into
+    a new device, so it deliberately carries less than cloud-backup.
+-->
 <data-extraction-rules>
     <cloud-backup>
         <include domain="database" path="void.db" />
         <include domain="file" path="datastore/" />
-        <exclude domain="file" path="icon-cache/" />
     </cloud-backup>
     <device-transfer>
         <include domain="database" path="void.db" />

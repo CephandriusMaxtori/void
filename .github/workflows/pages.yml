@@ -43,8 +43,12 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          # Reads docs/Gemfile. Pinning the bundler version keeps the build
-          # reproducible instead of tracking whatever ships today.
+          # setup-ruby will not guess a version when there is no .ruby-version
+          # or .tool-versions file, and fails with "input ruby-version needs to
+          # be specified". Pinned rather than floating so the docs build stays
+          # reproducible.
+          ruby-version: '3.3'
+          # Reads docs/Gemfile, caches gems against its lockfile.
           bundler-cache: true
           working-directory: docs
 

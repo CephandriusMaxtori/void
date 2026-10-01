@@ -2,9 +2,17 @@
 <!--
     Home layout is worth backing up: losing a hand-arranged grid to a reinstall
     is the kind of thing users notice immediately.
+
+    Only paths that are explicitly included get backed up, so anything not
+    listed here is excluded by omission. The icon cache is a derived artefact
+    and is deliberately NOT listed - it is rebuilt on first launch, and
+    shipping it would bloat the backup for no benefit.
+
+    Do not add <exclude> elements for paths that are not inside an <include>.
+    Lint rejects that as FullBackupContent: "X is not in an included path", and
+    it is right - such an exclude can never do anything.
 -->
 <full-backup-content>
     <include domain="database" path="void.db" />
     <include domain="file" path="datastore/" />
-    <exclude domain="file" path="icon-cache/" />
 </full-backup-content>

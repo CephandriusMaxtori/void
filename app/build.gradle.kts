@@ -78,6 +78,17 @@ android {
             isReturnDefaultValues = true
         }
     }
+
+    lint {
+        abortOnError = true
+        checkDependencies = true
+        // local.properties is gitignored and per-machine, but lint still walks
+        // the project directory and applies generic property-file rules to it.
+        // PropertyEscape demands escaping the drive-letter colon in the SDK
+        // path, which is noise about a file nobody else will ever see — and it
+        // would only ever fire for a Windows developer, never in CI.
+        disable += "PropertyEscape"
+    }
 }
 
 kotlin {
