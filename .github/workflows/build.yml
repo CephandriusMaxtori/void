@@ -26,6 +26,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # gradlew is committed with mode 100755 (via `git update-index
+      # --chmod=+x`), but core.fileMode is false on Windows, so the exec bit is
+      # easy to lose on a later re-commit. Without it the runner fails with
+      # "Permission denied" and exit code 126, which is a miserable thing to
+      # debug from a log. Cheap insurance.
+      - name: Ensure gradlew is executable
+        run: chmod +x gradlew
+
       # GitHub runners export ANDROID_HOME, so the gitignored local.properties
       # is not needed here. Local builds DO need it.
       - name: Set up JDK 17

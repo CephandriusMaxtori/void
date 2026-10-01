@@ -65,37 +65,94 @@ Behaviour changes that affect this project:
 - `targetSdk` now defaults to `compileSdk` rather than `minSdk`. Pinned
   explicitly regardless.
 
-## Open risks
+## Phase 0 smoke test — results
 
-### KSP + AGP 9 built-in Kotlin — **unverified**
+Run against a throwaway single-module project. **All three tests passed; the
+pinned stack is confirmed. No fallback to AGP 8.13.1 needed.**
 
-This is the load-bearing assumption. JetBrains' compatibility matrix states KSP
-is no longer version-tied to the Kotlin compiler as of 2.3.0, and that AGP 9
-support landed in 2.3.1. KSP 2.3.12 with KGP 2.3.20 is *expected* to work, but
-the decoupling is recent enough that it should be proven before nine modules
-depend on it.
+| # | Question | Result |
+|---|---|---|
+| 1 | How do you raise the KGP version under built-in Kotlin? | **`buildscript { dependencies { classpath(...) } }` in the root `build.gradle.kts`** |
+| 2 | Does KSP 2.3.12 work with AGP 9's built-in Kotlin? | **Yes.** `kspDebugKotlin` ran, Room emitted a schema |
+| 3 | Does the release build hold with 17/17 `jvmTarget`? | **Yes.** R8, resource shrinking, and `lintVital` all clean |
 
-**Verified by:** the Phase 0 smoke test in `Todo.md`.
-**Fallback if it fails:** AGP 8.13.1 + Gradle 8.14, both fully cached. Cost is a
-version bump.
+### Test 1 — pinning the Kotlin version
 
-### How to pin the KGP version — **unverified**
+`pluginManagement` has **no `dependencies` block** in the Kotlin DSL. Putting the
+classpath entry there fails at script compilation with a receiver type mismatch,
+which reads like a broken toolchain rather than a config mistake.
 
-AGP 9 has a *runtime dependency* on KGP 2.2.10 (its bundled minimum). Raising it
-is documented as adding a `kotlin-gradle-plugin` classpath entry to the
-buildscript. The idiomatic form for a version-catalog project has not been
-confirmed, and getting it wrong produces a confusing version-mismatch error
-rather than a clear one.
+The working form goes in the root `build.gradle.kts`:
 
-**Verified by:** the Phase 0 smoke test.
+```kotlin
+buildscript {
+    dependencies {
+        // AGP 9 has a *runtime dependency* on KGP 2.2.10. Declaring a higher
+        // version here makes Gradle's conflict resolution select it.
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.20")
+    }
+}
 
-### jvmTarget alignment
+plugins {
+    id("com.android.application") version "9.0.1" apply false
+    id("com.google.devtools.ksp") version "2.3.12" apply false
+}
+```
 
-AGP 9 moved Java source/target defaults to 11. Kotlin's `jvmTarget` must match
-`compileOptions`, and both are pinned to 17. A mismatch produces a D8 error at
-link time, not a compile error, so it is easy to miss until the release build.
+Confirmed via `buildEnvironment`, which reports
+`org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.20` — genuinely 2.3.20, not AGP's
+bundled 2.2.10.
 
-**Verified by:** the Phase 0 smoke test, which builds a release variant.
+### Test 2 — KSP with built-in Kotlin
+
+Works. Two independent signals, because "the task did not fail" is weaker
+evidence than it looks:
+
+- `kspDebugKotlin` executed
+- Room wrote `schemas/com.hoid.smoke.data.VoidDatabase/1.json`, which only
+  happens if the annotation processor actually ran and emitted output
+
+So the KSP 2.3.x / KGP version decoupling is real, and KSP 2.3.12 + KGP 2.3.20 is
+a valid combination. `org.jetbrains.kotlin.android` is correctly **not** applied.
+
+### Test 3 — release build and `jvmTarget`
+
+`assembleRelease` with `isMinifyEnabled` and `isShrinkResources` both true
+completed clean, including `minifyReleaseWithR8`,
+`convertShrunkResourcesToBinaryRelease`, and `lintVitalRelease`. A `jvmTarget`
+mismatch surfaces at link time as a D8 error, so this had to be proven on the
+release variant, not just the debug one. It holds at 17/17.
+
+Room needed no extra keep rules — it ships its own consumer rules. The real R8
+risk in this project is not Room but the launcher surface (`LauncherApps.Callback`,
+`AppWidgetProvider`, `AppWidgetHost`), which the system reflects over across
+process restarts. Not yet exercisable; stays a watch item for M6.
+
+## Windows and CI: file modes
+
+`gradlew` was initially committed with mode **100644** and CI failed with:
+
+```
+/home/runner/work/_temp/....sh: line 1: ./gradlew: Permission denied
+##[error]Process completed with exit code 126.
+```
+
+Cause: `core.fileMode` is `false` on Windows, so the POSIX exec bit is never
+recorded when committing from Windows. The Linux runner checks the file out
+without `+x`.
+
+Fix, committed:
+
+```
+git update-index --chmod=+x gradlew
+```
+
+Both workflows also run `chmod +x gradlew` after checkout, because
+`core.fileMode=false` means the bit can be lost again on a future re-commit, and
+exit code 126 is an unpleasant thing to debug from a log.
+
+`.gitattributes` separately forces LF on `gradlew`. A CRLF checkout fails
+differently and just as confusingly: `/bin/sh^M: bad interpreter`.
 
 ## CI
 

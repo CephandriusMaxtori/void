@@ -1,7 +1,7 @@
 version: 2
 
 updates:
-  # GitHub Actions used by the workflows.
+  # GitHub Actions. This one works today.
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -13,33 +13,36 @@ updates:
       actions:
         patterns: [ 'actions/*', 'gradle/*' ]
 
-  # Gradle plugins and libraries, resolved through the version catalog.
-  - package-ecosystem: gradle
-    directory: /
-    schedule:
-      interval: weekly
-    commit-message:
-      prefix: build
-    labels: [ dependencies, build ]
-    groups:
-      agp:
-        patterns: [ 'com.android.*' ]
-      kotlin:
-        patterns: [ 'org.jetbrains.kotlin*' ]
-      androidx:
-        patterns: [ 'androidx.*' ]
-      ksp:
-        patterns: [ 'com.google.devtools.ksp*' ]
-
-  # Macrobenchmark module resolves its own plugins.
-  - package-ecosystem: gradle
-    directory: /benchmark
-    schedule:
-      interval: weekly
-    commit-message:
-      prefix: build
-    labels: [ dependencies, build ]
-    ignore:
-      # AGP and Kotlin are pinned in the root catalog; keep one source of truth.
-      - dependency-name: com.android.tools.build:gradle
-      - dependency-name: org.jetbrains.kotlin:kotlin-gradle-plugin
+  # Gradle updates are DISABLED until Phase 1 lands a real build.
+  #
+  # Dependabot's Gradle parser needs a resolvable build to work from. Right now
+  # the root project is a placeholder with no build.gradle.kts and there is no
+  # /benchmark module, so every Gradle update PR comes back red — which trains
+  # you to ignore red. Re-enable once :app assembles.
+  #
+  # Re-enable by uncommenting the two blocks below.
+  #
+  # - package-ecosystem: gradle
+  #   directory: /
+  #   schedule:
+  #     interval: weekly
+  #   commit-message:
+  #     prefix: build
+  #   labels: [ dependencies, build ]
+  #   groups:
+  #     agp:
+  #       patterns: [ 'com.android.*' ]
+  #     kotlin:
+  #       patterns: [ 'org.jetbrains.kotlin*' ]
+  #     androidx:
+  #       patterns: [ 'androidx.*' ]
+  #     ksp:
+  #       patterns: [ 'com.google.devtools.ksp*' ]
+  #
+  # - package-ecosystem: gradle
+  #   directory: /benchmark
+  #   schedule:
+  #     interval: weekly
+  #   commit-message:
+  #     prefix: build
+  #   labels: [ dependencies, build ]
