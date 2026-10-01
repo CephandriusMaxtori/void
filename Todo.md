@@ -16,7 +16,7 @@ Settled during planning. Do not revisit without explicit instruction.
 | AGP / Gradle | **9.0.1 / 9.2.0** | Both cached locally. KSP 2.3.1+ and Hilt 2.59+ support AGP 9 built-in Kotlin |
 | compileSdk / targetSdk | **36 / 36** | |
 | DI | **Manual** (`AppContainer` + constructor injection) | No annotation processing for DI; KSP carries only Room |
-| Modules | **All 9 declared, lean content** | Architecture stays honest, per-milestone build stays fast |
+| Modules | **All 9 declared, lean content** (+ `feature:iconstudio` as a 10th and `feature:widgetmaker` as an 11th, see their rows) | Architecture stays honest, per-milestone build stays fast |
 | Home pages | **Multiple pages in v1** | Pages entity + pager are foundational from M1, not an additive later change |
 | Contacts permission | **Request on first launch** | §7 must be rewritten; use a rationale screen before the system dialog |
 | Weather (M5) | **Clock + user-configured provider** | Void never holds the network permission; no data leaves device unprompted |
@@ -24,6 +24,13 @@ Settled during planning. Do not revisit without explicit instruction.
 | Dot-matrix v1 | **Doto rendered as a normal font** | ~90% of the look for ~5% of the work; Canvas dot-grid deferred to weather readout |
 | Package | `namespace` **`com.hoid.voidlauncher`**, `applicationId` **`com.hoid.void`** | `void` is a Java keyword, so it cannot be a source package. The applicationId keeps the branding. See §Risks |
 | Dot font | **Doto (OFL)** | Confirmed on Google Fonts, fetchable |
+| Icon Studio | **Built-in icon pack creator (`feature:iconstudio`)**, backed by a runtime `IconStyle` generator in `core:icons` | Own the icon-theming story instead of depending on Icon Pack Studio, which is Smart Launcher-only on the Play Store. Generator covers every installed app with no per-app drawables |
+| Third-party icon packs | **Supported, opt-in** via the standard ADW-style format (`org.adw.launcher.THEMES`) | Lets Icon Pack Studio Universal exports work. Default stays "Void Mono" so the monochrome identity holds |
+| Icon Studio sharing | **JSON style export/import in v1**; icon pack APK export **out of scope** | APK building on-device is disproportionate effort |
+| Widget Maker | **Built-in widget creator (`feature:widgetmaker`)**: widgets are declarative `WidgetSpec` documents rendered by Compose inside Void | Same pure-Compose path as the built-in dot-matrix clock; no `RemoteViews` limits, no second rendering stack |
+| Widget Maker data sources | **No new permissions in v1**: time, date, battery, next alarm, storage | Keeps §7 intact; calendar, weather, media etc. come later or via the user-configured provider |
+| Widget Maker scope | Void-only widgets; exposing them as standard `AppWidgetProvider`s is **deferred** | Ties into the open question on the clock as an `AppWidgetProvider` |
+| Widget Maker sharing | **JSON export/import**, same format family as Icon Studio styles | One share mechanism for both creators |
 
 ---
 
@@ -117,17 +124,56 @@ If AGP is ever upgraded past 9.0.x, revisit the BOM in the same change.
 ## M2–M8
 
 - [ ] **M2** `core:icons` — monochrome pipeline, LRU + disk cache,
-      off-main-thread, `component + versionCode + themeVersion` key
+      off-main-thread, `component + versionCode + styleHash` key
+      (replaces `themeVersion`; the style hash covers the active `IconStyle`
+      and any selected icon pack)
+- [ ] **M2** `IconStyle` generator model in `core:icons` — shape mask (circle,
+      squircle, rounded square, none), background (transparent, solid,
+      outline-only), glyph tint, stroke weight, scale and padding. Pipeline
+      renders any app's icon from a style
+- [ ] **M2** Default preset "Void Mono" reproducing the monochrome look
+- [ ] **M2** Per-app override layer on top of the active style
 - [ ] **M2** Theme wiring, Doto typography, haptics
 - [ ] **M3** Home grid persistence, drag & drop with cell snapping, folder
       creation on drop, hideable dock
 - [ ] **M4** Auto-categorization, category tabs, smart search
 - [ ] **M4** Contacts search + first-launch rationale screen + `READ_CONTACTS`
+- [ ] **M4b** Icon Studio — declare `feature:iconstudio` module (10th)
+- [ ] **M4b** Studio UI: live preview grid with real installed apps, controls
+      for each `IconStyle` parameter, Void tokens + Doto labels
+- [ ] **M4b** Presets, plus save / rename / delete user styles (Room or DataStore)
+- [ ] **M4b** Style export / import as JSON (shareable file)
 - [ ] **M5** Dot-matrix clock, user-configured weather provider
+- [ ] **M5b** Widget Maker — declare `feature:widgetmaker` module (11th)
+- [ ] **M5b** `WidgetSpec` model: canvas size in grid cells, ordered elements
+      (text, dot-matrix text via Doto, shape, icon, progress bar / arc, image),
+      per-element position, size, colour tokens, font, opacity
+- [ ] **M5b** Data sources (no permissions): time, date, battery level / charging,
+      next alarm, storage. Binding via simple `{source}` expressions
+- [ ] **M5b** Renderer: `WidgetSpec` -> Compose, one tick per second only for
+      specs that actually bind a time source
+- [ ] **M5b** Editor UI: canvas with drag / resize / snap, layer list, property
+      panel, live data preview, Void tokens + Doto labels
+- [ ] **M5b** Rebuild the built-in dot-matrix clock as a preset `WidgetSpec`
+      (proves the renderer, and the preset library starts with something real)
+- [ ] **M5b** Save / duplicate / delete user widgets (Room), place on home grid
+      through the normal widget item type
+- [ ] **M5b** Export / import as JSON (shared format with Icon Studio styles)
 - [ ] **M6** Widget hosting — bind, configure, resize; crash guards in `core:system`
 - [ ] **M7** Folders, gestures, settings, Samsung/One UI options
+- [ ] **M7** Icon settings entry: style picker, per-app override list, link into Studio
+- [ ] **M7** Third-party icon pack import (opt-in):
+  - [ ] Discover packs via `PackageManager` for `org.adw.launcher.THEMES`
+        (also `com.novalauncher.THEME`)
+  - [ ] Parse `appfilter.xml` (component -> drawable, plus `iconback`,
+        `iconmask`, `iconupon`, `scale`), load drawables via the pack's `Resources`
+  - [ ] Resolution order: per-app override > icon pack > generated style /
+        monochrome layer > ColorMatrix fallback > Material placeholder
+  - [ ] Pack picker in settings; `packId + packVersion` folded into the cache key
 - [ ] **M8** Macrobenchmark (startup, drawer scroll, drag), baseline profile,
       accessibility pass
+- [ ] **M8** Benchmark icon generation + Studio preview scroll
+- [ ] **M8** Benchmark Widget Maker render cost + battery impact of the per-second tick
 
 ---
 
@@ -146,6 +192,8 @@ If AGP is ever upgraded past 9.0.x, revisit the BOM in the same change.
 - [x] **`NOTICE`** — Doto attributed under OFL, separately licensed from the
       project; Apache-2.0 deps listed
 - [ ] Per-milestone notes in `docs/milestones/`
+- [ ] `docs/architecture.md` — add `feature:iconstudio` and `feature:widgetmaker`
+      to the module graph and dependency rules
 
 ### Repo & CI
 
@@ -171,6 +219,7 @@ If AGP is ever upgraded past 9.0.x, revisit the BOM in the same change.
 - [x] Pages enabled with `build_type: workflow`
 - [x] `baseurl: "/void"` — it is a **project** site, served from a subpath
 - [ ] Confirm the first deploy succeeds
+- [ ] Add Icon Studio, icon pack support and Widget Maker to `roadmap.md`
 
 ---
 
@@ -181,8 +230,15 @@ Changes required before the doc matches the code.
 - [ ] `minSdk` 29 -> 33 (§ header, §3)
 - [ ] §3 — DI = manual `AppContainer`, not a framework
 - [ ] §3 — multi-page home promoted to v1
+- [ ] §3 — add `feature:iconstudio` and `feature:widgetmaker` to the module table
 - [ ] §4.2 — pages entity detail, page cap, page reorder
+- [ ] §4.3 — extend the icon pipeline: `IconStyle` generator, per-app overrides,
+      third-party icon pack resolution order, `styleHash` cache key
 - [ ] §4.4 — Doto-as-font for v1; Canvas dot-grid deferred
+- [ ] §4.6 — built-in widgets become preset `WidgetSpec`s; document Widget Maker,
+      data sources, JSON sharing, Void-only scope
+- [ ] §4.x (new) — Icon Studio: parameters, presets, JSON export/import,
+      APK export explicitly out of scope
 - [ ] §4.7 — **remove swipe-down notification shade**
       (`expandNotificationsPanel()` is a no-op for third-party launchers).
       Swipe *up* stays: as the HOME app we own that gesture.
@@ -192,7 +248,9 @@ Changes required before the doc matches the code.
       `READ_CONTACTS` requested at first launch; no network permission in v1
 - [ ] §7 — add `stateNotNeeded`, `configChanges` to manifest notes
 - [ ] §8 — M5 = clock + user-configured provider, not built-in weather
-- [ ] §10 — resolve all five open questions
+- [ ] §8 — add M4b (Icon Studio), M5b (Widget Maker) and the M7 icon pack import
+- [ ] §10 — resolve all five open questions (the clock-as-`AppWidgetProvider`
+      question is now tied to the deferred Widget Maker export)
 - [ ] Add — KSP/KGP version decoupling as an explicit risk + smoke test
 - [ ] Add — license section (custom; Doto remains OFL)
 
@@ -214,3 +272,10 @@ Changes required before the doc matches the code.
 | Trademark / asset concerns | Original assets only, Doto (OFL) | mitigated |
 | OEM variance (Samsung gestures, shade) | Feature-detect + graceful degradation + settings toggles | planned |
 | Custom license lacks patent grant | Revisit before public release | open |
+| Icon Studio scope creep (UI is large, easy to over-build) | Keep v1 to the `IconStyle` parameters + JSON share; no APK export; own milestone M4b | planned |
+| Third-party icon packs are mostly colored, clashing with the monochrome identity | Opt-in only, default stays "Void Mono" | planned |
+| Icon generation cost on first load / style change | Off-main-thread, LRU + disk cache keyed by `styleHash`, benchmark in M8 | planned |
+| Widget Maker scope creep (editors are bottomless) | v1 = fixed element set + no-permission data sources + JSON share; own milestone M5b | planned |
+| Widget Maker per-second recomposition drains battery | Tick only specs that bind time; hoist state, stable keys, benchmark in M8 | planned |
+| Users expect calendar / weather / media data in widgets | Out of v1 (permissions); weather via the user-configured provider later | planned |
+| Icon Pack Studio Play build only works with Smart Launcher | Document that Void users need Icon Pack Studio Universal for exports | planned |
