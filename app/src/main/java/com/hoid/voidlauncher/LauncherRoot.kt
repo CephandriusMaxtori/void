@@ -9,14 +9,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,10 +32,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hoid.voidlauncher.core.data.AppEntry
+import com.hoid.voidlauncher.core.icons.IconLoader
 import com.hoid.voidlauncher.di.AppContainer
 import com.hoid.voidlauncher.feature.drawer.DrawerContent
 import com.hoid.voidlauncher.feature.home.HomeGridSpec
@@ -64,13 +71,25 @@ fun LauncherRoot(
                 state = state,
                 onPageSelected = viewModel::onPageSelected,
                 onOpenApp = viewModel::onAppClicked,
+                iconLoader = container.iconLoader,
             )
         }
+
+        HomeControls(
+            modifier = Modifier.align(Alignment.TopCenter),
+            currentPage = state.currentPage,
+            pageCount = state.pageCount,
+            onOpenDrawer = viewModel::onDrawerOpened,
+            onAddPage = viewModel::onAddPage,
+            onRemovePage = { viewModel.onRemovePage(state.currentPage) },
+            onMovePage = viewModel::onMovePage,
+        )
 
         DrawerOverlay(
             visible = state.drawerOpen,
             apps = state.apps,
             onOpenApp = viewModel::onAppClicked,
+            iconLoader = container.iconLoader,
         )
 
         // Only shown with more than one page. A single dot on a one-page
@@ -97,10 +116,64 @@ fun LauncherRoot(
 }
 
 @Composable
+private fun HomeControls(
+    modifier: Modifier = Modifier,
+    currentPage: Int,
+    pageCount: Int,
+    onOpenDrawer: () -> Unit,
+    onAddPage: () -> Unit,
+    onRemovePage: () -> Unit,
+    onMovePage: (Int) -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TextButton(onClick = onOpenDrawer) {
+            Text("Apps")
+        }
+        Spacer(Modifier.weight(1f))
+        Text("${currentPage + 1} / $pageCount", style = MaterialTheme.typography.labelMedium)
+        TextButton(
+            enabled = currentPage > 0,
+            onClick = { onMovePage(-1) },
+            modifier = Modifier.semantics { contentDescription = "Move page earlier" },
+        ) {
+            Text("←")
+        }
+        TextButton(
+            enabled = currentPage < pageCount - 1,
+            onClick = { onMovePage(1) },
+            modifier = Modifier.semantics { contentDescription = "Move page later" },
+        ) {
+            Text("→")
+        }
+        TextButton(
+            enabled = pageCount < HomeGridSpec.MAX_PAGES,
+            onClick = onAddPage,
+            modifier = Modifier.semantics { contentDescription = "Add page" },
+        ) {
+            Text("+")
+        }
+        TextButton(
+            enabled = pageCount > 1,
+            onClick = onRemovePage,
+            modifier = Modifier.semantics { contentDescription = "Remove page" },
+        ) {
+            Text("−")
+        }
+    }
+}
+
+@Composable
 private fun HomePager(
     state: LauncherUiState,
     onPageSelected: (Int) -> Unit,
     onOpenApp: (String) -> Unit,
+    iconLoader: IconLoader,
 ) {
     val pagerState = rememberPagerState(
         initialPage = state.currentPage,
@@ -126,6 +199,7 @@ private fun HomePager(
         HomePageContent(
             page = state.pages[page],
             dockApps = state.dockApps,
+            iconLoader = iconLoader,
             onOpenApp = onOpenApp,
         )
     }
@@ -136,6 +210,7 @@ private fun DrawerOverlay(
     visible: Boolean,
     apps: List<AppEntry>,
     onOpenApp: (String) -> Unit,
+    iconLoader: IconLoader,
 ) {
     var query by remember { mutableStateOf("") }
 
@@ -155,6 +230,7 @@ private fun DrawerOverlay(
             query = query,
             onQueryChange = { query = it },
             onOpenApp = onOpenApp,
+            iconLoader = iconLoader,
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),

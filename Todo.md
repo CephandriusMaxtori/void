@@ -107,33 +107,42 @@ If AGP is ever upgraded past 9.0.x, revisit the BOM in the same change.
 
 ---
 
-## Phase 2 — M1: Shell + drawer
+## Phase 2 — M1: Shell + drawer — **IN PROGRESS**
 
-- [ ] `LauncherActivity` + root scaffold, edge-to-edge, predictive back
-- [ ] `core:system` — `LauncherApps` wrapper, `LauncherApps.Callback`, shortcuts
-- [ ] `core:data` — `AppEntry`, Room entities, repository
-- [ ] `core:designsystem` — tokens, typography, haptics
-- [ ] `feature:home` — multi-page pager, 4x6 grid per page + dock row,
+The app builds with the launcher shell, app repository, home pager, drawer UI,
+and initial icon rendering. Remaining gaps are interaction wiring, page-cap
+enforcement, shortcuts, and device verification.
+
+- [x] `LauncherActivity` + root scaffold, edge-to-edge, predictive-back handler
+- [~] `core:system` — `LauncherApps` wrapper, `LauncherApps.Callback`, app
+      launching are implemented; launcher shortcuts remain
+- [x] `core:data` — `AppEntry`, Room entities, repository
+- [x] `core:designsystem` — tokens, typography, haptics
+- [x] `feature:home` — multi-page pager, 4x6 grid per page + dock row,
       horizontal insets for One UI edge-back
-- [ ] Pages entity: add / remove / reorder, page cap, page indicator
-- [ ] `feature:drawer` — flat app list + app search (categories wait for M4)
+- [~] Pages entity and add / remove / reorder operations are implemented;
+      enforce the page cap and expose page management in the UI
+- [~] `feature:drawer` — flat app list + app search are implemented; wire a
+      user interaction to open the drawer (categories wait for M4)
 - [ ] Set as default home, verify on device
 
 ---
 
 ## M2–M8
 
-- [ ] **M2** `core:icons` — monochrome pipeline, LRU + disk cache,
-      off-main-thread, `component + versionCode + styleHash` key
-      (replaces `themeVersion`; the style hash covers the active `IconStyle`
-      and any selected icon pack)
+- [~] **M2** `core:icons` — monochrome-layer preference, grayscale fallback,
+      LRU + disk cache, and off-main-thread loading are implemented. Replace
+      the current `component + versionCode + themeVersion` key with
+      `component + versionCode + styleHash` (covering active `IconStyle` and
+      selected icon pack)
 - [ ] **M2** `IconStyle` generator model in `core:icons` — shape mask (circle,
       squircle, rounded square, none), background (transparent, solid,
       outline-only), glyph tint, stroke weight, scale and padding. Pipeline
       renders any app's icon from a style
-- [ ] **M2** Default preset "Void Mono" reproducing the monochrome look
+- [~] **M2** Basic deterministic monochrome initials renderer exists; implement
+      the "Void Mono" preset through the `IconStyle` generator
 - [ ] **M2** Per-app override layer on top of the active style
-- [ ] **M2** Theme wiring, Doto typography, haptics
+- [~] **M2** Base theme and haptics are wired; add Doto typography
 - [ ] **M3** Home grid persistence, drag & drop with cell snapping, folder
       creation on drop, hideable dock
 - [ ] **M4** Auto-categorization, category tabs, smart search

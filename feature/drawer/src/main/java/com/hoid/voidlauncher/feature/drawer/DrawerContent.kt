@@ -1,5 +1,7 @@
 package com.hoid.voidlauncher.feature.drawer
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,13 +20,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hoid.voidlauncher.core.data.AppEntry
+import com.hoid.voidlauncher.core.icons.MonochromeAppIcon
+import com.hoid.voidlauncher.core.icons.IconLoader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * The app drawer: a search field over a flat, alphabetical list.
@@ -39,6 +51,7 @@ fun DrawerContent(
     query: String,
     onQueryChange: (String) -> Unit,
     onOpenApp: (String) -> Unit,
+    iconLoader: IconLoader,
     modifier: Modifier = Modifier,
 ) {
     // Filtered here rather than in the ViewModel so typing stays local and
@@ -83,7 +96,7 @@ fun DrawerContent(
                 // as the query changes.
                 key = { it.componentKey },
             ) { app ->
-                AppRow(app = app, onOpen = onOpenApp)
+                AppRow(app = app, iconLoader = iconLoader, onOpen = onOpenApp)
             }
         }
     }
@@ -109,6 +122,7 @@ internal fun filterApps(apps: List<AppEntry>, query: String): List<AppEntry> {
 @Composable
 private fun AppRow(
     app: AppEntry,
+    iconLoader: IconLoader,
     onOpen: (String) -> Unit,
 ) {
     Row(
@@ -119,13 +133,10 @@ private fun AppRow(
             .padding(vertical = 8.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Sized like the monochrome icon, which lands in M2. Fixing the size
-        // now means the row does not reflow when the real icon arrives.
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+        AppIcon(
+            componentKey = app.componentKey,
+            iconLoader = iconLoader,
+            modifier = Modifier.size(40.dp),
         )
         Text(
             text = app.label,
@@ -143,6 +154,36 @@ private fun AppRow(
             text = app.category.label,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun AppIcon(
+    componentKey: String,
+    iconLoader: IconLoader,
+    modifier: Modifier = Modifier,
+) {
+    var bitmap by remember(componentKey) { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(componentKey) {
+        val loaded = withContext(Dispatchers.Default) { iconLoader.loadBitmap(componentKey) }
+        bitmap = loaded
+    }
+
+    val icon = bitmap
+    if (icon != null) {
+        Image(
+            bitmap = icon.asImageBitmap(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(RoundedCornerShape(12.dp)),
+        )
+    } else {
+        Box(
+            modifier = modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
         )
     }
 }

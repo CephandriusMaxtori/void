@@ -1,5 +1,7 @@
 package com.hoid.voidlauncher.feature.home
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,15 +20,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hoid.voidlauncher.core.data.GridItem
 import com.hoid.voidlauncher.core.data.HomePage
+import com.hoid.voidlauncher.core.icons.MonochromeAppIcon
+import com.hoid.voidlauncher.core.icons.IconLoader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Grid geometry (design doc §4.2: fixed N×M cells, default 4×6).
@@ -40,7 +53,7 @@ object HomeGridSpec {
     const val DOCK_COLUMNS = 4
 
     /** Hard ceiling. A pager with 40 pages is not navigable. */
-    const val MAX_PAGES = 7
+    const val MAX_PAGES = HomePage.MAX_PAGES
 }
 
 /**
@@ -53,6 +66,7 @@ object HomeGridSpec {
 fun HomePageContent(
     page: HomePage,
     dockApps: List<String>,
+    iconLoader: IconLoader,
     onOpenApp: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -92,6 +106,7 @@ fun HomePageContent(
                     ) { item ->
                         GridCell(
                             item = item,
+                            iconLoader = iconLoader,
                             onOpen = { key -> onOpenApp(key) },
                         )
                     }
@@ -101,6 +116,7 @@ fun HomePageContent(
 
         DockRow(
             componentKeys = dockApps,
+            iconLoader = iconLoader,
             onOpenApp = onOpenApp,
         )
     }
@@ -109,6 +125,7 @@ fun HomePageContent(
 @Composable
 private fun GridCell(
     item: GridItem,
+    iconLoader: IconLoader,
     onOpen: (String) -> Unit,
 ) {
     val label = when (item) {
@@ -132,29 +149,42 @@ private fun GridCell(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        // Placeholder for the monochrome icon, which arrives in M2. Sized like
-        // an icon so the cell geometry does not move when it lands.
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.Transparent),
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(2.dp),
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize().padding(6.dp),
+        ) {
+            if (openable != null) {
+                AppIcon(
+                    componentKey = openable.componentKey,
+                    iconLoader = iconLoader,
+                    modifier = Modifier.size(40.dp),
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Transparent),
+                )
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
     }
 }
 
 @Composable
 private fun DockRow(
     componentKeys: List<String>,
+    iconLoader: IconLoader,
     onOpenApp: (String) -> Unit,
 ) {
     Row(
@@ -184,18 +214,44 @@ private fun DockRow(
                 contentAlignment = Alignment.Center,
             ) {
                 if (key != null) {
-                    Text(
-                        text = key.shortLabel(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(2.dp),
+                    AppIcon(
+                        componentKey = key,
+                        iconLoader = iconLoader,
+                        modifier = Modifier.size(32.dp),
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AppIcon(
+    componentKey: String,
+    iconLoader: IconLoader,
+    modifier: Modifier = Modifier,
+) {
+    var bitmap by remember(componentKey) { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(componentKey) {
+        val loaded = withContext(Dispatchers.Default) { iconLoader.loadBitmap(componentKey) }
+        bitmap = loaded
+    }
+
+    val icon = bitmap
+    if (icon != null) {
+        Image(
+            bitmap = icon.asImageBitmap(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(RoundedCornerShape(12.dp)),
+        )
+    } else {
+        Box(
+            modifier = modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
+        )
     }
 }
 

@@ -23,6 +23,13 @@ interface HomePageDao {
     @Insert
     suspend fun insert(page: HomePageEntity): Long
 
+    @Transaction
+    suspend fun insertIfBelowLimit(maxPages: Int): Long? {
+        val currentCount = count()
+        if (currentCount >= maxPages) return null
+        return insert(HomePageEntity(position = currentCount))
+    }
+
     @Update
     suspend fun update(page: HomePageEntity)
 

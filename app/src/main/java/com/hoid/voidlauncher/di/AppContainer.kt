@@ -5,6 +5,7 @@ import com.hoid.voidlauncher.core.data.AppRepository
 import com.hoid.voidlauncher.core.data.create
 import com.hoid.voidlauncher.core.designsystem.haptics.AndroidHaptics
 import com.hoid.voidlauncher.core.designsystem.haptics.Haptics
+import com.hoid.voidlauncher.core.icons.IconLoader
 import com.hoid.voidlauncher.core.system.LauncherAppsSource
 
 /**
@@ -33,6 +34,10 @@ class AppContainer(context: Context) {
     // --- core:system ---
 
     val launcherApps: LauncherAppsSource by lazy { LauncherAppsSource(appContext) }
+
+    // --- core:icons ---
+
+    val iconLoader: IconLoader by lazy { IconLoader(appContext, launcherApps) }
 
     // --- core:data ---
 

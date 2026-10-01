@@ -134,6 +134,21 @@ class LauncherViewModel(
         }
     }
 
+    fun onMovePage(delta: Int) {
+        val state = uiState.value
+        val from = state.currentPage
+        val to = from + delta
+        if (to !in state.pages.indices) return
+
+        val orderedIds = state.pages.map { it.id }.toMutableList()
+        val movedPage = orderedIds.removeAt(from)
+        orderedIds.add(to, movedPage)
+        currentPage.value = to
+        viewModelScope.launch {
+            repository.reorderPages(orderedIds)
+        }
+    }
+
     companion object {
         /**
          * Factory, built by hand to match the manual-DI rule: `app` is the only

@@ -4,15 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import com.hoid.voidlauncher.core.designsystem.theme.VoidTheme
+import com.hoid.voidlauncher.di.AppContainer
 
 /**
  * The single activity. Everything visible happens in Compose.
@@ -30,29 +23,13 @@ class LauncherActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        val container = AppContainer(this)
+
         setContent {
             VoidTheme {
-                LauncherSurface()
+                LauncherRoot(container = container)
             }
         }
     }
 }
 
-/**
- * Placeholder root for M1 scaffolding. Replaced by the real home/drawer
- * coordinator once `feature:home` and `feature:drawer` have content.
- */
-@Composable
-private fun LauncherSurface() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = "Void",
-            style = MaterialTheme.typography.displayLarge,
-        )
-    }
-}

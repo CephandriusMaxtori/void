@@ -103,10 +103,13 @@ class AppRepository(
         Log.i(TAG, "Created ${minimum - existing} page(s)")
     }
 
-    suspend fun addPage(): Long = withContext(ioDispatcher) {
-        val count = pageDao.count()
-        val id = pageDao.insert(HomePageEntity(position = count))
-        Log.i(TAG, "Added page $id at position $count")
+    suspend fun addPage(): Long? = withContext(ioDispatcher) {
+        val id = pageDao.insertIfBelowLimit(HomePage.MAX_PAGES)
+        if (id == null) {
+            Log.w(TAG, "Refusing to exceed the ${HomePage.MAX_PAGES}-page limit")
+            return@withContext null
+        }
+        Log.i(TAG, "Added page $id")
         id
     }
 

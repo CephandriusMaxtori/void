@@ -53,7 +53,11 @@ data class HomePage(
     val id: Long,
     val position: Int,
     val items: List<GridItem>,
-)
+) {
+    companion object {
+        const val MAX_PAGES = 7
+    }
+}
 
 /** Something occupying cells on a page. */
 sealed interface GridItem {
