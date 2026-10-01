@@ -1,0 +1,45 @@
+version: 2
+
+updates:
+  # GitHub Actions used by the workflows.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    labels: [ dependencies, ci ]
+    groups:
+      actions:
+        patterns: [ 'actions/*', 'gradle/*' ]
+
+  # Gradle plugins and libraries, resolved through the version catalog.
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+    labels: [ dependencies, build ]
+    groups:
+      agp:
+        patterns: [ 'com.android.*' ]
+      kotlin:
+        patterns: [ 'org.jetbrains.kotlin*' ]
+      androidx:
+        patterns: [ 'androidx.*' ]
+      ksp:
+        patterns: [ 'com.google.devtools.ksp*' ]
+
+  # Macrobenchmark module resolves its own plugins.
+  - package-ecosystem: gradle
+    directory: /benchmark
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+    labels: [ dependencies, build ]
+    ignore:
+      # AGP and Kotlin are pinned in the root catalog; keep one source of truth.
+      - dependency-name: com.android.tools.build:gradle
+      - dependency-name: org.jetbrains.kotlin:kotlin-gradle-plugin

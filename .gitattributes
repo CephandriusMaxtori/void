@@ -1,0 +1,21 @@
+# Normalize line endings. This matters more than usual here: gradlew is a shell
+# script, and if it gets CRLF endings it fails on the Linux CI runner with a
+# "/bin/sh^M: bad interpreter" error.
+* text=auto eol=lf
+
+# Windows batch files must keep CRLF or cmd.exe chokes.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# gradlew must be LF even on Windows checkouts.
+gradlew text eol=lf
+
+# Binaries.
+*.jar binary
+*.jks binary
+*.keystore binary
+*.apk binary
+*.aab binary
+*.png binary
+*.webp binary
+*.jar binary

@@ -1,0 +1,79 @@
+name: Benchmark
+
+# Macrobenchmark needs a real Android device or an emulator with KVM. GitHub's
+# hosted runners do not provide a usable one, so this workflow is manual-only and
+# targets a self-hosted runner that has a device attached (or an emulator
+# running) and is labelled `benchmark`.
+#
+# See docs/toolchain.md for how to provision the runner.
+
+on:
+  workflow_dispatch:
+    inputs:
+      benchmark:
+        description: 'Benchmark filter (e.g. Startup, DrawerScroll, DragAndDrop)'
+        required: false
+        default: ''
+      instrumentation:
+        description: 'Fully-qualified benchmark test class'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmark
+  cancel-in-progress: false
+
+jobs:
+  macrobenchmark:
+    name: Macrobenchmark
+    runs-on: [ self-hosted, benchmark ]
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Require a connected device
+        run: |
+          set -euo pipefail
+          adb devices
+          if [ -z "$(adb devices | sed '1d' | grep -w device || true)" ]; then
+            echo "::error::No Android device available on this runner."
+            exit 1
+          fi
+
+      # The benchmark profileable release variant: minified, with the
+      # baseline profile applied, which is what the timing targets assume.
+      - name: Run Macrobenchmark
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.instrumentation }}" ]; then
+            ./gradlew benchmark \
+              -Pandroid.testInstrumentationRunnerArguments.class="${{ inputs.instrumentation }}"
+          elif [ -n "${{ inputs.benchmark }}" ]; then
+            ./gradlew benchmark \
+              -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=${{ inputs.benchmark }}
+          else
+            ./gradlew benchmark
+          fi
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: benchmark-results
+          path: benchmark/build/outputs/benchmarkData/**/*.json
+          if-no-files-found: warn
+          retention-days: 30
