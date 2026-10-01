@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Home layout is worth backing up: losing a hand-arranged grid to a reinstall
+    is the kind of thing users notice immediately.
+-->
+<full-backup-content>
+    <include domain="database" path="void.db" />
+    <include domain="file" path="datastore/" />
+    <exclude domain="file" path="icon-cache/" />
+</full-backup-content>

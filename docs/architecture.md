@@ -24,25 +24,35 @@ and no imperative "tell the grid to scroll" calls.
 ## Module graph
 
 ```
-                         app
-                          |
-        +--------+--------+--------+--------+
-        |        |        |        |        |
-    feature  feature  feature  feature  (di wiring only)
-    :home    :drawer  :widgets  :settings
-        |        |        |        |
-        +--------+--------+--------+
-                     |
-              core:designsystem
-              core:icons
-                     |
-              core:data
-              core:system
+                              app
+                               |
+        +---------+----------+----------+---------+
+        |         |          |          |         |
+    feature   feature    feature    feature   (DI wiring only)
+    :home     :drawer    :widgets   :settings
+        |         |          |          |
+        +---------+----------+----------+
+                              |
+                       core:designsystem
+                              |
+              +-----------+---+-----------+
+              |           |           |
+        core:data   core:icons   core:system
 ```
+
+Arrows point in the direction of allowed dependency. `feature:*` may use
+`core:*`; `core:*` never imports from `feature:*` or `app`.
+
+At M1 the graph is flatter than the target: `core:data`, `core:icons`, and
+`core:system` have no Compose dependency yet, and no `feature` module depends
+on another. The separations that exist now are the ones the milestone needs —
+`core:designsystem` is already standalone, and the three non-UI `core` modules
+are already free of Compose, which is what keeps the majority of logic testable
+on the JVM without a device.
 
 ### Dependency rules
 
-These are the rules that make the boundaries real. Violating them is a bug, not
+These are the rules that make the boundaries real. Violating one is a bug, not
 a style preference.
 
 1. **Dependencies point downward only.** `feature:*` may use `core:*`. `core:*`
@@ -86,7 +96,9 @@ class LauncherActivity : ComponentActivity() {
 `by lazy` is deliberate: it means nothing is constructed until something
 actually asks for it, which keeps cold start cheap. That matters more than usual
 for a launcher, where cold start to interactive home is a stated target of
-under 500 ms.
+under 500 ms. Constructing a repository eagerly would mean opening a database
+and querying the package manager on the main thread during
+`Application.onCreate`, which is the single easiest way to blow that budget.
 
 ViewModels are constructed with `viewModelFactory { initializer { ... } }` so
 they receive exactly the collaborators they need and nothing more. That is also
@@ -94,6 +106,33 @@ what makes them testable with plain fakes.
 
 **No annotation processor is used for DI.** KSP is reserved for Room. This keeps
 builds fast and removes a whole class of plugin-compatibility risk.
+
+## Build configuration
+
+The nine module build files are deliberately explicit rather than sharing a
+`buildSrc` convention plugin. The duplication is real but bounded, and the
+alternative — a precompiled script plugin — adds a compile step to every build
+in a phase whose whole point is a fast feedback loop. Revisit if the module
+count grows past nine.
+
+What must stay identical across all of them:
+
+```kotlin
+compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+```
+
+AGP 9 moved the Java default to 11. If the two sides disagree the build fails at
+D8 link time with a message that does not obviously point at `jvmTarget`, so
+both are pinned in every module. This is verified by the release build in CI,
+not just the debug one.
 
 ## State ownership
 
@@ -123,6 +162,22 @@ failure mode in this app, so:
   composition. A failed load renders the Material placeholder.
 - **Coroutines in ViewModels are scoped to `viewModelScope`.** A rotation cannot
   leave orphaned work touching a destroyed hierarchy.
+
+## R8 and the launcher surface
+
+R8 is the quiet failure mode in a launcher. A stripped class does not crash —
+it stops being *called*, and the symptom is a launcher that quietly ignores
+package changes or widget updates.
+
+The classes the system reaches reflectively across process restarts, and which
+therefore need explicit keeps, are listed in `app/proguard-rules.pro`:
+`LauncherActivity`, `LauncherApps.Callback` implementations,
+`AppWidgetProvider` / `AppWidgetService` subclasses, and generated
+`RoomDatabase` subclasses. Room ships its own consumer rules; the explicit keeps
+are belt-and-braces on the failure that is hardest to diagnose.
+
+CI builds a minified release on every push for exactly this reason — the debug
+build exercises none of this.
 
 ## Testing strategy
 

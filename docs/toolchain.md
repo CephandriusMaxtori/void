@@ -128,6 +128,75 @@ risk in this project is not Room but the launcher surface (`LauncherApps.Callbac
 `AppWidgetProvider`, `AppWidgetHost`), which the system reflects over across
 process restarts. Not yet exercisable; stays a watch item for M6.
 
+## Package naming: `void` is a Java keyword
+
+`com.hoid.void` **cannot be used as a source package name.** `void` is a Java
+keyword, so the build fails immediately:
+
+```
+Namespace 'com.hoid.void' is not a valid Java package name as 'void' is a
+Java keyword.
+```
+
+This affects the namespace of all nine modules and cannot be worked around with
+a manifest change. The resolution splits the two identifiers:
+
+| | Value | Why |
+|---|---|---|
+| `namespace` | `com.hoid.voidlauncher` | Must be a legal Java package. This is what Kotlin source uses. |
+| `applicationId` | `com.hoid.void` | The installed package and Play listing. A string to the OS, so the keyword is harmless here. |
+
+The two are deliberately different, and every source file's `package` line uses
+`voidlauncher`. Anything that resolves against the namespace — `R`, `BuildConfig`,
+manifest `.Foo` relative names, `android:name=".VoidApplication"` — follows
+`com.hoid.voidlauncher` automatically.
+
+Worth knowing before this bites again: the module **directory** names (`core`,
+`feature`, `app`) are Gradle paths and are unaffected, and the **repo** is named
+`void` for the same reason.
+
+## Kotlin DSL traps hit while building this
+
+Three config errors that each produced a confusing message. Recorded so the next
+one is recognisable.
+
+### `libs.platform(...)` does not exist in a build file
+
+```kotlin
+val bom = libs.platform(libs.androidx.compose.bom)   // Unresolved reference 'platform'
+```
+
+`platform()` is a bare function inside `dependencies { }`, not a `libs` accessor.
+`libs.platform(...)` is `buildSrc` / precompiled-plugin API.
+
+```kotlin
+dependencies {
+    implementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+}
+```
+
+### The Compose compiler plugin needs its own version
+
+```toml
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose" }
+```
+
+Fails with "plugin dependency must include a version number". The reasoning that
+seemed right — the plugin ships with KGP, so the buildscript classpath entry
+should satisfy it — is wrong. The Compose compiler is a separate artifact, so
+there is no plugin marker on the classpath for Gradle to resolve. Pin it:
+
+```toml
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+```
+
+It still tracks the Kotlin version, just explicitly.
+
+### `pluginManagement` has no `dependencies` block
+
+Covered under Phase 0 above. The KGP pin belongs in the root `buildscript`.
+
 ## Windows and CI: file modes
 
 `gradlew` was initially committed with mode **100644** and CI failed with:

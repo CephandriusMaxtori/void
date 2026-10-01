@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Monochrome layer for the launcher icon, per docs/design-v0.3.md §5: the icon
+    is a single solid glyph, and the system tints it to match the user's theme.
+    This is the same monochrome concept the icon pipeline applies to every
+    installed app, applied to ourselves.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
+</adaptive-icon>

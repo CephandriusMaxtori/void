@@ -1,0 +1,73 @@
+[versions]
+# Toolchain. All verified in the Phase 0 smoke test — see docs/toolchain.md.
+agp = "9.0.1"
+kotlin = "2.3.20"
+ksp = "2.3.12"
+
+# Android SDK levels. minSdk 33 because monochrome icon layers are API 33+.
+# compileSdk 36 because that is AGP 9.0's maximum supported API level.
+compileSdk = "36"
+minSdk = "33"
+targetSdk = "36"
+
+# Libraries
+# Compose 1.12.x (BOM 2026.08.00 and 2026.09.00) requires compileSdk 37 AND
+# AGP 9.1.0 or higher. This project is pinned to AGP 9.0.1 / compileSdk 36, so
+# the newest usable BOM is 2026.06.01, which maps to Compose 1.11.4.
+#
+# If you ever upgrade AGP past 9.0.x, revisit this line. Do not bump it alone:
+# the BOM, the AGP, and the compileSdk have to move together or
+# checkDebugAarMetadata fails with 22 errors.
+composeBom = "2026.06.01"
+room = "2.8.5"
+datastore = "1.2.1"
+coroutines = "1.11.0"
+coreKtx = "1.13.1"
+activityCompose = "1.9.3"
+lifecycle = "2.8.7"
+junit = "4.13.2"
+
+[libraries]
+# --- AndroidX core ---
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+
+# --- Compose (versions come from the BOM) ---
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui" }
+androidx-compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
+androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
+
+# --- Lifecycle / ViewModel ---
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+
+# --- Persistence ---
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+
+# --- Coroutines ---
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# --- Test ---
+junit = { module = "junit:junit", version.ref = "junit" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+
+[plugins]
+# AGP 9 provides Kotlin built in. Do NOT add org.jetbrains.kotlin.android —
+# applying it alongside is an error.
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+
+# The Compose compiler plugin is version-tied to the Kotlin version. It still
+# needs a version of its own here: unlike the Kotlin plugin, it is not part of
+# the AGP-bundled KGP, so there is no plugin marker on the buildscript
+# classpath for Gradle to resolve it from.
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

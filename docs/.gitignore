@@ -1,0 +1,5 @@
+# The docs build output. Jekyll writes here; it is never committed.
+_site/
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/

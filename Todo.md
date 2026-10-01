@@ -22,7 +22,7 @@ Settled during planning. Do not revisit without explicit instruction.
 | Weather (M5) | **Clock + user-configured provider** | Void never holds the network permission; no data leaves device unprompted |
 | License | **Custom** | Doto stays OFL regardless; consider adding an express patent grant |
 | Dot-matrix v1 | **Doto rendered as a normal font** | ~90% of the look for ~5% of the work; Canvas dot-grid deferred to weather readout |
-| Package | `com.hoid.void` | Per §3 |
+| Package | `namespace` **`com.hoid.voidlauncher`**, `applicationId` **`com.hoid.void`** | `void` is a Java keyword, so it cannot be a source package. The applicationId keeps the branding. See §Risks |
 | Dot font | **Doto (OFL)** | Confirmed on Google Fonts, fetchable |
 
 ---
@@ -59,21 +59,44 @@ The stack holds. No fallback to AGP 8.13.1 needed. Full results and the
 
 ---
 
-## Phase 1 — Skeleton
+## Phase 1 — Skeleton — **DONE, builds**
+
+`:app:assembleDebug` produces a working APK. All nine modules declared and
+building.
 
 - [x] Gradle wrapper at 9.2.0
-- [x] `settings.gradle.kts` — 9 modules (placeholder for now)
-- [ ] `build.gradle.kts` — root, with the KGP `buildscript` classpath pin
-- [ ] `gradle/libs.versions.toml` — single source of truth for all versions
-- [ ] `gradle/libs.versions.toml` — single source of truth for all versions
-- [ ] `gradle.properties` — jvmargs, caching, parallel
-- [ ] `local.properties` — done, gitignored
-- [ ] 9 module build files + manifests
-- [ ] `AndroidManifest.xml` — HOME + DEFAULT filters, `singleTask`,
+- [x] `settings.gradle.kts` — 9 modules, `FAIL_ON_PROJECT_REPOS`
+- [x] `build.gradle.kts` — root, with the KGP `buildscript` classpath pin
+- [x] `gradle/libs.versions.toml` — single source of truth for all versions
+- [x] `gradle.properties` — jvmargs, parallel, caching, configuration cache
+- [x] `local.properties` — gitignored
+- [x] 9 module build files + `consumer-rules.pro`
+- [x] `AndroidManifest.xml` — HOME + DEFAULT + LAUNCHER filters, `singleTask`,
       `excludeFromRecents`, `stateNotNeeded="true"`, broad `configChanges`,
-      `windowSoftInputMode`
-- [ ] Verify `:app:assembleDebug` builds empty
+      `clearTaskOnLaunch`, `windowSoftInputMode`
+- [x] **Launcher-safe theme** — `Theme.DeviceDefault.NoActionBar`, not AppCompat
+      or Material3. The system instantiates the home activity outside any
+      AppCompat delegate, and an AppCompat theme there crashes on cold boot
+- [x] `QUERY_ALL_PACKAGES` with a documented `tools:ignore`, plus `READ_CONTACTS`
+      declared but not requested
+- [x] Launcher icon with a real `monochrome` layer
+- [x] `proguard-rules.pro` — keeps for the launcher surface R8 would otherwise
+      strip silently
+- [x] Verify `:app:assembleDebug` builds
 - [ ] Baseline Profile module scaffold (M8, but declare early)
+
+### Version pins settled during Phase 1
+
+| | |
+|---|---|
+| Compose BOM | **`2026.06.01`** (Compose 1.11.4), not the newest `2026.09.00` |
+| `namespace` | `com.hoid.voidlauncher` |
+| `applicationId` | `com.hoid.void` |
+
+The BOM is a **three-way lock with AGP and compileSdk**. Compose 1.12.x
+(BOM `2026.08.00`+ / Compose `1.12.0`+) needs compileSdk 37 *and* AGP 9.1.0+.
+Bumping the BOM alone produces 22 near-identical `checkDebugAarMetadata` errors.
+If AGP is ever upgraded past 9.0.x, revisit the BOM in the same change.
 
 ---
 
@@ -117,10 +140,11 @@ The stack holds. No fallback to AGP 8.13.1 needed. Full results and the
 - [x] `docs/architecture.md` — module graph, dependency rules
 - [x] `README.md` — build instructions, prerequisites
 - [x] `docs/toolchain.md` — Phase 0 findings, version compatibility notes
-- [ ] **`LICENSE`** — repo is **public** and currently has no license, so GitHub
-      treats it as "all rights reserved". Write the custom license deliberately
-      rather than dropping in Apache 2.0 as a placeholder. Consider including an
-      express patent grant. Note Doto stays OFL regardless.
+- [x] **`LICENSE`** — Apache 2.0, `Copyright 2026 Nolan Bragan`. The custom
+      no-redistribution licence was replaced because it contradicted the public
+      repo; Apache 2.0 also carries the express patent grant it lacked
+- [x] **`NOTICE`** — Doto attributed under OFL, separately licensed from the
+      project; Apache-2.0 deps listed
 - [ ] Per-milestone notes in `docs/milestones/`
 
 ### Repo & CI
@@ -129,11 +153,24 @@ The stack holds. No fallback to AGP 8.13.1 needed. Full results and the
 - [x] `build.yml` — assemble debug + release, unit tests, lint, upload APKs
 - [x] `release.yml` — signed release on `v*` tag
 - [x] `benchmark.yml` — manual Macrobenchmark on a self-hosted runner
+- [x] `pages.yml` — Jekyll docs site
 - [x] `dependabot.yml` — Actions + Gradle, grouped
+- [x] `gradlew` mode 100755 + defensive `chmod` step
 - [ ] Repository secrets for signed releases:
       `VOID_KEYSTORE_B64`, `VOID_KEYSTORE_PASSWORD`, `VOID_KEY_ALIAS`,
       `VOID_KEY_PASSWORD`
 - [ ] Confirm CI goes green on the first real push
+
+### Docs site
+
+- [x] Jekyll, with `docs/` as the root so Android sources are structurally
+      excluded rather than filtered
+- [x] `Gemfile` with pinned Jekyll for reproducibility
+- [x] `assets/css/style.css` using the app's own tokens
+- [x] `index.md` landing page, `roadmap.md`
+- [x] Pages enabled with `build_type: workflow`
+- [x] `baseurl: "/void"` — it is a **project** site, served from a subpath
+- [ ] Confirm the first deploy succeeds
 
 ---
 

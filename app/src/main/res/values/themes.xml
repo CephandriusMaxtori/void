@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        A launcher must not apply an AppCompat or Material3 theme here. The
+        system instantiates the home activity on its own, outside any
+        AppCompat delegate setup, and a theme that expects one crashes on
+        cold boot. This is a plain platform theme and the UI is Compose.
+    -->
+    <style name="Theme.Void" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>

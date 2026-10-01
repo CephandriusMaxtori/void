@@ -1,0 +1,49 @@
+# Jekyll configuration for the documentation site.
+#
+# Docs are authored as Markdown in this folder and rendered by Jekyll, so there
+# is one source of truth: the file you edit in a pull request is the file that
+# gets published. Generating HTML into the repo instead would guarantee the two
+# drift apart.
+#
+# This folder is the Jekyll root. Nothing outside it can be published, which is
+# why the Android sources need no exclude list — the build simply never sees
+# them. Run it with:  cd docs && bundle exec jekyll build
+#
+# Deployed by .github/workflows/pages.yml, not by GitHub's built-in Jekyll
+# pipeline, so the build is reproducible and the versions are pinned.
+
+title: Void Launcher
+description: >-
+  An Android home launcher with a monochrome, dot-matrix aesthetic and a strict
+  black/white/gray palette with a single red accent.
+lang: en
+
+# This is a *project* Pages site, so it is served from
+# https://cephandriusmaxtori.github.io/void/ — not the domain root. Getting this
+# wrong yields 404s on every asset and navigation link, because Jekyll emits
+# root-relative URLs.
+#
+# The workflow overrides this with configure-pages' base_path, so the two must
+# agree; keeping it correct here also means a local `jekyll build` previews
+# faithfully.
+baseurl: "/void"
+url: "https://cephandriusmaxtori.github.io"
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-seo-tag
+
+# The repo is not a blog.
+feed:
+  disable: true
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default

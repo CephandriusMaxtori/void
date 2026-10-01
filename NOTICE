@@ -1,0 +1,24 @@
+Void Launcher — Doto font attribution
+====================================
+
+Doto
+----
+Copyright (c) 2020 The Doto Project Authors
+(https://github.com/googlefonts/doto)
+
+Licensed under the SIL Open Font License, Version 1.1.
+Full text: https://scripts.sil.org/OFL
+
+Doto is bundled with this project as `app/src/main/res/font/doto.ttf` (added in
+M2, alongside the dot-matrix clock).
+
+The SIL Open Font License is a separate licence from this project's own. It
+governs the font file and its derivatives, and nothing in this project's
+licence modifies, restricts, or supersedes it. In particular, the OFL expressly
+permits redistribution of the font, and any such redistribution must continue
+under the OFL.
+
+Other components
+----------------
+Jetpack Compose, AndroidX, Room, and the Kotlin standard library are used under
+the Apache License 2.0. See the upstream projects for their licence texts.

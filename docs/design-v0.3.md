@@ -321,6 +321,25 @@ The five questions v0.2 left open:
 
 ---
 
+## 12. Documentation
+
+| Document | Covers |
+|---|---|
+| `docs/design-v0.3.md` | This document. What the launcher is |
+| `docs/architecture.md` | Module graph, dependency rules, DI, R8, testing |
+| `docs/toolchain.md` | Pinned versions, AGP 9 changes, config traps |
+| `docs/roadmap.md` | Milestones and status |
+| `Todo.md` | Working task list, decisions table, risks |
+
+All published to GitHub Pages at
+`https://cephandriusmaxtori.github.io/void/` by `.github/workflows/pages.yml`.
+Authored as Markdown and rendered by Jekyll, so the file edited in a pull
+request is the file published — no generated HTML in the repo to drift out of
+sync. The site's own stylesheet uses the design tokens from §5 rather than a
+stock theme.
+
+---
+
 **Document version:** 0.3
 **Last updated:** 2026-10-01
 **Previous:** v0.2

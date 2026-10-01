@@ -1,0 +1,18 @@
+# Pinned so the docs build is reproducible. An unpinned Jekyll means the site
+# can change appearance without a commit, which is a bad time to discover a
+# breaking change in a theme filter.
+source "https://rubygems.org"
+
+gem "jekyll", "~> 4.3"
+
+group :jekyll_plugins do
+  gem "jekyll-seo-tag", "~> 2.8"
+end
+
+# Windows and JRuby need these explicitly.
+platforms :mingw, :x64_mingw, :mswin, :jruby do
+  gem "tzinfo", ">= 1", "< 3"
+  gem "tzinfo-data"
+end
+
+gem "webrick", "~> 1.8"

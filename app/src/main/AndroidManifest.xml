@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        Permissions stance (docs/design-v0.3.md §7):
+
+        Core home and drawer features require NO permissions.
+
+        READ_CONTACTS is declared but requested at runtime with a rationale
+        screen, and only for contacts search. Declaring it here is not the same
+        as asking for it - the request happens in M4.
+
+        There is deliberately NO INTERNET permission. The weather widget reads
+        from a provider the user configures themselves, so Void never holds
+        network access. Do not add it without revisiting §7.
+    -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!--
+        QUERY_ALL_PACKAGES lets LauncherApps see every installed app. Android 11
+        package visibility otherwise hides apps that do not declare a matching
+        <queries> element, which would leave the drawer mysteriously empty.
+        Home launchers are a legitimate use; the tools:ignore documents that
+        the Play Store console review is expected.
+    -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <application
+        android:name=".VoidApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Void">
+
+        <activity
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:excludeFromRecents="true"
+            android:clearTaskOnLaunch="true"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.Void"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|density|layoutDirection|fontScale">
+
+            <!--
+                HOME + DEFAULT makes the app selectable as a home launcher.
+                LAUNCHER keeps it reachable from the app drawer before the user
+                has set it as default, which matters: a launcher you cannot
+                reach to fix a bad state is a launcher that bricks your phone.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

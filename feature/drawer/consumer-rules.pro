@@ -1,0 +1,1 @@
+# Library consumers supply their own rules; R8 runs in :app.
