@@ -143,6 +143,7 @@ enforcement, shortcuts, and device verification.
       the "Void Mono" preset through the `IconStyle` generator
 - [ ] **M2** Per-app override layer on top of the active style
 - [~] **M2** Base theme and haptics are wired; add Doto typography
+
 - [ ] **M3** Home grid persistence, drag & drop with cell snapping, folder
       creation on drop, hideable dock
 - [ ] **M4** Auto-categorization, category tabs, smart search
@@ -183,6 +184,29 @@ enforcement, shortcuts, and device verification.
       accessibility pass
 - [ ] **M8** Benchmark icon generation + Studio preview scroll
 - [ ] **M8** Benchmark Widget Maker render cost + battery impact of the per-second tick
+
+---
+
+
+---
+
+## M1 progress
+
+Code written and compiling; **not yet verified on a device**.
+
+- [x] `core:system` — `LauncherAppsSource` + `PackageChangeCallback`, live app flow
+- [x] `core:data` — entities, DAOs, `VoidDatabase`, `AppRepository`, `AppClassifier`
+- [x] `core:data` — structural columns (`folder_id`, `widget_id`, `sort_index`)
+      exist from schema v1 so M3/M6 need no migration
+- [x] `core:designsystem` — `Haptics` interface + `AndroidHaptics`
+- [x] `feature:home` — fixed 4x6 grid, fixed-slot dock, `HomeGridSpec`
+- [x] `feature:drawer` — sorted list + substring search
+- [x] `app` — `AppContainer`, `LauncherViewModel`, `LauncherRoot` (pager + drawer)
+- [x] `app` holds no persistence types: `AppRepository.create()` builds the
+      database internally, so Room never needs to be on `app`'s compile classpath
+- [ ] **Install on a device and set as default home** ← blocking
+- [ ] Verify apps enumerate, drawer search works, back closes the drawer
+- [ ] Baseline Profile module scaffold (M8)
 
 ---
 

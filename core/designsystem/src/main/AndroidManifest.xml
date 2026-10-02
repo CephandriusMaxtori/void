@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Declared HERE, not only in :app.
+
+        The haptics implementation lives in this module, so lint resolves
+        Vibrator.vibrate against *this* module's manifest. Adding the permission
+        to :app alone still fails lint with MissingPermission, which is the
+        correct behaviour: a library that needs a permission should declare it,
+        so any app consuming the library picks it up through manifest merge
+        rather than discovering at runtime that its haptics throw
+        SecurityException.
+
+        VIBRATE is a NORMAL permission: auto-granted at install, no runtime
+        prompt, and nothing shown in the permission list the user reviews.
+    -->
     <uses-permission android:name="android.permission.VIBRATE" />
+
 </manifest>

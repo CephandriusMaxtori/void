@@ -232,8 +232,15 @@ browsing work with an empty permission set.
 | `READ_CONTACTS` | Requested at first launch, for contacts search | Dangerous + runtime-gated. Requested with a rationale screen explaining the benefit *before* the system dialog — a bare prompt for a secondary feature reads as malware-adjacent. Declining leaves the app fully functional. |
 | `BIND_APPWIDGET` | System dialog, when adding a third-party widget | Required by the platform |
 | `VIBRATE` | Declared, never requested | **Normal** permission, auto-granted at install, no prompt. Without it `Vibrator.vibrate` throws. Does not weaken the no-dangerous-permissions claim |
+| `QUERY_ALL_PACKAGES` | Declared | Normal permission. Without it Android 11+ package visibility hides any app declaring no matching `<queries>` element, and the drawer comes up mysteriously empty. Home launchers are a legitimate use; the manifest carries a `tools:ignore` for the Play review |
 | Accessibility service | Optional, only if the user enables double-tap-to-lock | Advanced gestures only |
 | Usage access | **Not in v1** | Only if "recent apps" is added later |
+
+`VIBRATE` and `QUERY_ALL_PACKAGES` are **normal** permissions, not dangerous
+ones: no runtime prompt, no entry in the permission list the user reviews, and
+auto-granted at install. So declaring them does not weaken the "no dangerous
+permissions for the core experience" claim above — the only dangerous
+permission this app ever requests is `READ_CONTACTS`.
 
 **No network permission.** Void requests no network access at all in v1. The
 weather widget (§4.6) reads from a provider the user configures themselves, so
