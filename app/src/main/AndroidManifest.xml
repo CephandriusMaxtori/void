@@ -18,6 +18,15 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <!--
+        NORMAL permission, not dangerous: auto-granted at install, no runtime
+        prompt, and it does not appear in the permission list the user reviews.
+        So it does not weaken the "no dangerous permissions for core features"
+        claim in design doc section 7. Without it, Vibrator.vibrate throws
+        SecurityException and the launcher's haptics are dead on arrival.
+    -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!--
         QUERY_ALL_PACKAGES lets LauncherApps see every installed app. Android 11
         package visibility otherwise hides apps that do not declare a matching
         <queries> element, which would leave the drawer mysteriously empty.
